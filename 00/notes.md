@@ -149,24 +149,3 @@ These units perform the computations:
 L2 cache belongs to the entire GPU, not a single SM.
 
 It is larger than L1 but slower, and shared across SMs.
-
-## Example: NVIDIA A100
-
-- ~108 SMs  
-- Each SM → 64 floating-point cores  
-
-In total:
-
-- ~7000 floating-point cores  
-- ~7000 integer cores  
-- plus tensor cores and other specialized units  
-
-## Why is it so powerful?
-
-Bcs it can execute thousands of operations in parallel
-
-This makes it ideal for:
-
-- artificial intelligence  
-- scientific computing  
-- large-scale data processing
