@@ -34,8 +34,6 @@ This is a practical, engineering-focused learning log.
 
 - Almost everything :) 
 
-## Follow the journey
-
 I will share updates regularly.
 
 Thanks to https://github.com/Nottlespike for the guidance.
