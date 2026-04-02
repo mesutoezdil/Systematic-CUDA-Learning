@@ -1,3 +1,5 @@
+![Supported by JetBrains](https://img.shields.io/badge/Supported%20by-JetBrains-000000?logo=jetbrains&logoColor=white)
+
 # Systematic CUDA Learning
 
 This repo documents my journey of learning CUDA from scratch.
@@ -40,14 +42,16 @@ Thanks to https://github.com/Nottlespike for the guidance.
 
 ## Sponsorship
 
-This project is supported by JetBrains.
-
 <p align="left">
   <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.svg" width="120">
 </p>
 
-I received a personal license for JetBrains All Products Pack, which I use while working on this repository.
+This project is supported by JetBrains.
 
-JetBrains builds some of the best developer tools in the ecosystem, and they support open-source creators.
+I received a personal JetBrains All Products Pack license, which I use while working on this repository.
 
-👉 https://www.jetbrains.com/
+JetBrains provides professional developer tools that I actively use for CUDA development, experimentation, and documentation.
+
+This sponsorship does not influence the technical content of this repository.
+
+--> https://www.jetbrains.com/
