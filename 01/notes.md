@@ -1,79 +1,187 @@
-We’re continuing our CUDA learning journey. 
+## How I Started Understanding Where GPUs Come From
 
-Before we start writing code, it’s good to understand the bigger picture. 
+As I continued learning CUDA, I realized something important.
 
-GPUs did not become powerful overnight. They improved step by step over many years. 
+Jumping directly into code didn’t feel right.
 
-So let’s quickly look at how things started.
+I was missing context.
 
-In the late 90s, many big tech companies were founded. Nvidia is one of them. 
+So I paused for a moment and asked myself:
 
-It was founded in 1993 by Jensen Huang.
+How did GPUs even become this powerful?
 
-What is interesting is how fast they started building products. 
+Because clearly, they didn’t start like this.
 
-After only about 2 years, they released their first device: NV1.
+---
 
-If we look at it today, it looks very simple:
+## Looking Back Made Things Much Clearer
 
-* only 2 MB memory
-* 64-bit bus
-* just 1 core
+When I looked into the early days, I noticed something interesting.
 
-So there was almost no parallel processing like we have today.
+Many of today’s big tech companies were founded around the same time.
 
-Now let’s compare this with a modern GPU, for example the RTX 4090 Ti.
+Nvidia is one of them.
 
-The difference is huge:
+It was founded in the early 90s.
 
-* from 1 core → to tens of thousands of cores
-* from 2 MB → to many GB of memory
-* from very low MHz → to a few GHz
+What surprised me was not just *when* it was founded, but how quickly things started moving.
 
-So this is not just a small improvement. 
+Within a short time, Nvidia released its first product.
 
-It is a completely different level.
+---
 
-Also, GPUs are not only for graphics anymore. 
+## The First Step Was Very Simple
 
-Today they are used for AI, data processing, simulations, and many other things.
+Their early hardware looks extremely basic from today’s perspective.
 
-Let’s move forward a bit.
+If you compare it to modern GPUs, it almost feels like a different world.
 
-In 1997, Nvidia released the RIVA 128 (also called NV3). 
+Back then:
 
-This model was important because it brought 3D acceleration to more users. 
+- very small memory  
+- very limited data bandwidth  
+- almost no real parallelism  
 
-Because of that, it was much more successful than NV1 and sold very well in a short time.
+In other words, nothing like what we expect from a GPU today.
 
-Then in 1998, something very important happened: the GeForce series was introduced.
+---
 
-Most people know this name today. 
+## Then I Tried Comparing It to Modern GPUs
 
-This was a big turning point.
+To really understand the difference, I compared early GPUs with modern ones.
 
-If we look at the first GeForce GPU:
+And that’s where things became obvious.
 
-* it had 4 cores
-* this was a big step compared to only 1 core before
+Today’s GPUs:
 
-For that time, this was a big innovation.
+- have thousands (or even tens of thousands) of cores  
+- come with massive amounts of memory  
+- run at much higher frequencies  
 
-Memory also improved:
+This is not just an improvement.
 
-* from 2 MB → to 32 MB
+It is a completely different scale.
 
-This made a real difference in performance.
+And more importantly:
 
-Over the years, GPUs kept improving faster and faster. 
+The role of GPUs has changed.
 
-And today, Nvidia is not just a company that makes graphics cards.
+---
 
-* it is very strong in gaming
-* and also very important in AI and high-performance computing
+## GPUs Are Not Just About Graphics Anymore
 
-So GPUs are no longer just for games. 
+Originally, GPUs were built for rendering images.
 
-They are now a key part of modern technology.
+That was their main job.
 
-That’s why understanding this evolution helps a lot before going deeper into the technical details.
+But today, that is only a small part of the story.
+
+Now GPUs are heavily used for:
+
+- artificial intelligence  
+- large-scale data processing  
+- simulations  
+- scientific computing  
+
+So when we talk about GPUs today, we are really talking about compute platforms.
+
+Not just graphics devices.
+
+---
+
+## The First Real Turning Point
+
+As I continued looking through the timeline, one moment stood out.
+
+When GPUs started to support real 3D acceleration in a meaningful way.
+
+This was important because it made GPUs useful for a much wider audience.
+
+Not just specialists.
+
+And naturally, this led to rapid adoption.
+
+---
+
+## Then Came a Name Everyone Knows
+
+Shortly after that, something happened that still affects us today.
+
+The introduction of the GeForce series.
+
+This was more than just a product launch.
+
+It was a shift.
+
+For the first time, GPUs started to become widely accessible.
+
+Even the early versions already showed a clear step forward.
+
+More parallelism.
+
+More memory.
+
+More capability.
+
+At that time, even a small increase in core count or memory made a big difference.
+
+Because the baseline was still very low.
+
+---
+
+## From Small Steps to Rapid Growth
+
+After that point, progress accelerated.
+
+Each generation brought improvements.
+
+Sometimes in performance.
+
+Sometimes in efficiency.
+
+Sometimes in new capabilities.
+
+And over time, all of these improvements started to compound.
+
+That’s why modern GPUs feel so powerful today.
+
+Not because of one big jump.
+
+But because of many steps over many years.
+
+---
+
+## Where We Are Today (2026 Perspective)
+
+Today, Nvidia is not just known for graphics.
+
+It plays a central role in:
+
+- gaming  
+- AI infrastructure  
+- cloud computing  
+- high-performance computing  
+
+And in many cases, GPUs are now the main driver behind modern AI systems.
+
+This is a big shift from where things started.
+
+---
+
+## Why This Matters Before CUDA
+
+At first, this felt like background knowledge.
+
+But it turned out to be very useful.
+
+Because once you understand how GPUs evolved:
+
+- architecture decisions make more sense  
+- performance differences become easier to understand  
+- modern GPU features feel more logical.  
+
+For me, this was an important step.
+
+It helped me connect the past with what we see today.
+
+And that made it much easier to move forward into CUDA.

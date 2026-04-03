@@ -1,151 +1,285 @@
-# Getting Started with CUDA
+## Starting CUDA: What I Realized Before Writing Any Code
 
-We are starting to learn CUDA. For now, we’ll just focus on what we need.
+When I started learning CUDA, my first instinct was simple.
 
-Before diving into deep topics, let’s clarify one basic question:
+Write some code, run it on the GPU, and get faster results.
 
-Is it enough to just write code and run it on a GPU to get optimal performance?
+But very quickly, I noticed something.
 
-The answer is: No.
+It doesn’t work like that.
 
-So why?
+Just moving code to the GPU does NOT automatically give you good performance.
 
-Bcs even though CPUs and GPUs may look similar at first glance, they are designed for completely different purposes.
+And that made me stop and think.
 
-## CPU vs GPU
-
-Both have similar components, but they are used differently:
-
-### Memory (DRAM / global memory)
-
-- CPU → uses system RAM  
-- GPU → has its own dedicated memory (VRAM)
-
-### Cache
-
-- CPU → L1, L2, and L3 cache  
-- GPU → usually L1 and L2 cache  
-- GPU also has shared memory, which is critical for parallel processing  
-
-**Note:**  
-L1, L2, and L3 cache are small but very fast memory layers inside the CPU used to access data quickly.
-
-### Processing Units
-
-- CPU → few but powerful processing units (ALU, etc.)  
-- GPU → many simpler cores (for example, CUDA cores in NVIDIA architecture)
-
-## The real difference
-
-- CPU → optimized for low-latency, sequential tasks  
-- GPU → optimized for high parallelism  
-
-In simple terms:
-
-- CPU → does one task very fast  
-- GPU → does many tasks at the same time  
-
-## ALU vs GPU Core
-
-If we compare them directly:
-
-- CPU processing units → more powerful and complex  
-- GPU cores → simpler but much more numerous  
-
-What is an ALU?
-
-ALU (Arithmetic Logic Unit) is the part of the processor that performs basic operations like addition, subtraction, and comparisons.
-
-## Frequency difference (important detail)
-
-- Modern CPU → around 3–4 GHz  
-- NVIDIA A100 GPU core → ~765–1200 MHz  
-
-So at a single-core level, CPUs are faster.
-
-But that is not the main strength of GPUs.
-
-## Why are GPUs powerful?
-
-Bcs:
-
-→ They can execute many operations in parallel at the same time!
-
-This makes GPUs ideal for:
-
-- graphics processing  
-- artificial intelligence  
-- large-scale data computations  
-
-## Again
-
-- CPU → sequential tasks  
-- GPU → parallel tasks  
-
-That’s why this statement is wrong:
-
-> "GPUs are always better than CPUs"
-
-## How CPU and GPU work together
-
-In a system, you have: CPU, RAM and PCI interface  
-
-The GPU connects to the system via PCI.
-
-So:
-
-- CPU → uses system RAM  
-- GPU → uses its own memory  
-
-## GPU Architecture (NVIDIA-focused)
-
-Inside a GPU, the most important structure is:
-
-### Streaming Multiprocessor (SM)
-
-An SM is the basic working unit of a GPU.
-
-A GPU is essentially made up of many SMs working together, and all parallel computation happens through them.
+Why?
 
 ---
 
-## What is inside an SM?
+## The First Big Difference I Had to Accept
 
-Each SM works like a small processor and contains:
+At a surface level, CPUs and GPUs look similar.
 
-- L1 cache  
-  Small fast memory for frequently used data  
+Both process data.
 
-- Registers 
-  The fastest memory, used directly by each thread  
+Both execute instructions.
 
-- Scheduler  
-  Decides which tasks run and when  
+But under the hood, they are built with completely different goals.
 
-- Dispatcher  
-  Sends tasks to execution units  
+Once I understood this, everything started to make more sense.
 
-## Execution units (the actual workers)
+## How I Started Comparing CPU and GPU
 
-These units perform the computations:
+Instead of looking at specs, I tried to understand the mindset behind each design.
 
-- Floating-point cores  
-  Handle decimal calculations (AI, graphics, etc.)
+A CPU is built to handle tasks that require:
 
-- Integer cores  
-  Handle integer operations  
+- fast response  
+- complex logic  
+- sequential execution  
 
-- Tensor cores  
-  Specialized for fast matrix operations (very important for AI)
+A GPU is built for something else entirely.
 
-- Special Function Units (SFU)  
-  Handle complex math operations like log, sin, cos  
+It is designed to process many things at the same time.
 
-- Load/Store units  
-  Move data between memory and registers  
+So instead of: one complex task → very fast  
 
-## L2 cache (global level)
+it does: many simple tasks → in parallel  
 
-L2 cache belongs to the entire GPU, not a single SM.
+That difference is everything.
 
-It is larger than L1 but slower, and shared across SMs.
+---
+
+## Memory Is Also Different
+
+Another thing I didn’t fully understand at first was memory.
+
+CPUs use system RAM.
+
+Everything goes through the same shared memory space.
+
+GPUs are different.
+
+They have their own memory, usually called VRAM.
+
+This means:
+
+- CPU and GPU do not automatically share data  
+- data needs to be transferred between them.
+
+And that transfer can become a bottleneck if you are not careful.
+
+---
+
+## Cache and Fast Memory (Small but Important Detail)
+
+I also noticed that both CPU and GPU have fast internal memory layers.
+
+But they are used differently.
+
+CPUs rely heavily on multiple cache levels: L1, L2, L3
+
+These are small but extremely fast.
+
+GPUs also have cache, but they introduce something extra.
+
+Shared memory.
+
+This turned out to be very important.
+
+Because it allows threads inside the GPU to cooperate efficiently.
+
+At first, I ignored it.
+
+Later, I realized it is one of the key tools for optimization.
+
+---
+
+## Processing Power Is Not What I Expected
+
+Initially, I thought GPUs are stronger because they are “faster”.
+
+But that’s not really true.
+
+If you compare a single core:
+
+CPUs usually run at higher frequencies.
+
+Several GHz.
+
+GPU cores run slower individually.
+
+So if you compare one core vs one core: CPU wins.
+
+---
+
+## Then Where Does GPU Power Come From?
+
+This is where everything changes.
+
+A GPU does not rely on one powerful core.
+
+It uses many simpler cores.
+
+A lot of them.
+
+So instead of finishing one task quickly, it splits work into many smaller parts.
+
+And runs them at the same time.
+
+That is why GPUs are powerful.
+
+Not because each unit is strong.
+
+But because there are so many working together.
+
+---
+
+## A Simple Way I Remember It
+
+CPU: one task → very fast  
+
+GPU: many tasks → at the same time  
+
+And this explains something important.
+
+GPUs are not always better.
+
+They are only better when the problem can be parallelized.
+
+If your task is sequential, a CPU can easily outperform a GPU.
+
+---
+
+## How CPU and GPU Work Together
+
+Another thing I had to understand:
+
+The GPU is not independent.
+
+It works together with the CPU.
+
+In a typical system:
+
+- CPU manages the program  
+- GPU executes parallel workloads  
+
+They communicate through interfaces like PCIe.
+
+So data flow looks like this:
+
+CPU → sends data to GPU  
+GPU → processes it  
+GPU → sends results back  
+
+If this flow is not handled well, performance suffers.
+
+---
+
+## Inside the GPU: The Real Work Happens Here
+
+Once I understood the high-level picture, I looked inside the GPU.
+
+The most important unit is something called: Streaming Multiprocessor (SM)
+
+At first, the name sounded complicated.
+
+But I started thinking of it like this:
+
+An SM is a small processing unit inside the GPU.
+
+And a GPU is just many of these SMs working together.
+
+---
+
+## What Is Inside an SM?
+
+Each SM contains everything needed to run parallel work.
+
+There is fast memory.
+
+Registers, which are the fastest storage available.
+
+There is shared memory, where threads can exchange data.
+
+And there are control units that decide what runs and when.
+
+But the most important part is the execution units.
+
+---
+
+## The Units That Actually Do the Work
+
+Inside each SM, there are different types of compute units.
+
+Each one is specialized.
+
+Some handle floating-point operations.
+
+These are heavily used in graphics and AI.
+
+Some handle integer operations.
+
+Then there are Tensor Cores.
+
+These are specialized for matrix computations, which are critical for AI workloads.
+
+There are also special function units.
+
+They handle more complex math operations.
+
+And finally, load/store units.
+
+They move data between memory and computation units.
+
+So the GPU is not just “many cores”.
+
+It is a structured system of specialized units.
+
+---
+
+## One More Important Detail: L2 Cache
+
+There is also a global cache layer.
+
+L2 cache.
+
+Unlike L1 or shared memory, this is not tied to a single SM.
+
+It is shared across the whole GPU.
+
+It is larger, but also slower.
+
+Still, it plays a key role in reducing memory access cost.
+
+---
+
+## What This Changed for Me
+
+At the beginning, I thought CUDA was about writing code.
+
+But now I see something else.
+
+It is about understanding the hardware.
+
+Because if you don’t understand:
+
+- how memory works  
+- how parallel execution works  
+- how data moves  
+
+then you cannot use the GPU efficiently.
+
+---
+
+## Final
+
+For me, this was a mindset shift.
+
+GPU programming is not just coding.
+
+It is about thinking in parallel.
+
+And once I started seeing it that way, everything began to connect.
+
+Especially when moving deeper into CUDA.
