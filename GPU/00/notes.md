@@ -14,8 +14,6 @@ And that made me stop and think.
 
 Why?
 
----
-
 ## The First Big Difference I Had to Accept
 
 At a surface level, CPUs and GPUs look similar.
@@ -48,8 +46,6 @@ it does: many simple tasks → in parallel
 
 That difference is everything.
 
----
-
 ## Memory Is Also Different
 
 Another thing I didn’t fully understand at first was memory.
@@ -68,8 +64,6 @@ This means:
 - data needs to be transferred between them.
 
 And that transfer can become a bottleneck if you are not careful.
-
----
 
 ## Cache and Fast Memory (Small but Important Detail)
 
@@ -93,8 +87,6 @@ At first, I ignored it.
 
 Later, I realized it is one of the key tools for optimization.
 
----
-
 ## Processing Power Is Not What I Expected
 
 Initially, I thought GPUs are stronger because they are “faster”.
@@ -110,8 +102,6 @@ Several GHz.
 GPU cores run slower individually.
 
 So if you compare one core vs one core: CPU wins.
-
----
 
 ## Then Where Does GPU Power Come From?
 
@@ -133,8 +123,6 @@ Not because each unit is strong.
 
 But because there are so many working together.
 
----
-
 ## A Simple Way I Remember It
 
 CPU: one task → very fast  
@@ -148,8 +136,6 @@ GPUs are not always better.
 They are only better when the problem can be parallelized.
 
 If your task is sequential, a CPU can easily outperform a GPU.
-
----
 
 ## How CPU and GPU Work Together
 
@@ -174,8 +160,6 @@ GPU → sends results back
 
 If this flow is not handled well, performance suffers.
 
----
-
 ## Inside the GPU: The Real Work Happens Here
 
 Once I understood the high-level picture, I looked inside the GPU.
@@ -190,8 +174,6 @@ An SM is a small processing unit inside the GPU.
 
 And a GPU is just many of these SMs working together.
 
----
-
 ## What Is Inside an SM?
 
 Each SM contains everything needed to run parallel work.
@@ -205,8 +187,6 @@ There is shared memory, where threads can exchange data.
 And there are control units that decide what runs and when.
 
 But the most important part is the execution units.
-
----
 
 ## The Units That Actually Do the Work
 
@@ -236,8 +216,6 @@ So the GPU is not just “many cores”.
 
 It is a structured system of specialized units.
 
----
-
 ## One More Important Detail: L2 Cache
 
 There is also a global cache layer.
@@ -251,8 +229,6 @@ It is shared across the whole GPU.
 It is larger, but also slower.
 
 Still, it plays a key role in reducing memory access cost.
-
----
 
 ## What This Changed for Me
 
@@ -269,8 +245,6 @@ Because if you don’t understand:
 - how data moves  
 
 then you cannot use the GPU efficiently.
-
----
 
 ## Final
 

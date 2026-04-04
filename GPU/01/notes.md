@@ -12,8 +12,6 @@ How did GPUs even become this powerful?
 
 Because clearly, they didn’t start like this.
 
----
-
 ## Looking Back Made Things Much Clearer
 
 When I looked into the early days, I noticed something interesting.
@@ -28,8 +26,6 @@ What surprised me was not just *when* it was founded, but how quickly things sta
 
 Within a short time, Nvidia released its first product.
 
----
-
 ## The First Step Was Very Simple
 
 Their early hardware looks extremely basic from today’s perspective.
@@ -43,8 +39,6 @@ Back then:
 - almost no real parallelism  
 
 In other words, nothing like what we expect from a GPU today.
-
----
 
 ## Then I Tried Comparing It to Modern GPUs
 
@@ -66,8 +60,6 @@ And more importantly:
 
 The role of GPUs has changed.
 
----
-
 ## GPUs Are Not Just About Graphics Anymore
 
 Originally, GPUs were built for rendering images.
@@ -87,8 +79,6 @@ So when we talk about GPUs today, we are really talking about compute platforms.
 
 Not just graphics devices.
 
----
-
 ## The First Real Turning Point
 
 As I continued looking through the timeline, one moment stood out.
@@ -100,8 +90,6 @@ This was important because it made GPUs useful for a much wider audience.
 Not just specialists.
 
 And naturally, this led to rapid adoption.
-
----
 
 ## Then Came a Name Everyone Knows
 
@@ -117,17 +105,11 @@ For the first time, GPUs started to become widely accessible.
 
 Even the early versions already showed a clear step forward.
 
-More parallelism.
-
-More memory.
-
-More capability.
+More parallelism, memory and capability.
 
 At that time, even a small increase in core count or memory made a big difference.
 
 Because the baseline was still very low.
-
----
 
 ## From Small Steps to Rapid Growth
 
@@ -135,11 +117,7 @@ After that point, progress accelerated.
 
 Each generation brought improvements.
 
-Sometimes in performance.
-
-Sometimes in efficiency.
-
-Sometimes in new capabilities.
+Sometimes in performance, in efficiency and in new capabilities.
 
 And over time, all of these improvements started to compound.
 
@@ -149,9 +127,7 @@ Not because of one big jump.
 
 But because of many steps over many years.
 
----
-
-## Where We Are Today (2026 Perspective)
+## Where We Are Today
 
 Today, Nvidia is not just known for graphics.
 
@@ -165,8 +141,6 @@ It plays a central role in:
 And in many cases, GPUs are now the main driver behind modern AI systems.
 
 This is a big shift from where things started.
-
----
 
 ## Why This Matters Before CUDA
 

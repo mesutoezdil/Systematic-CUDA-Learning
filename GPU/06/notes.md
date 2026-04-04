@@ -6,28 +6,21 @@ I kept seeing names like Fermi, Ampere, Hopper… but they felt like just labels
 
 So I stopped for a moment and asked myself:
 
-What do these architectures actually mean?  
-And why should I even care?
+What do these architectures actually mean?
 
----
+And why should I even care?
 
 At first, I thought this was just history.
 
-But the more I looked into it, the more I understood:
-
-This is not about memorizing names.
+But the more I looked into it, the more I understood: This is not about memorizing names.
 
 It is about understanding how GPUs evolved, and why they look the way they do today.
-
----
 
 ## What “Architecture” Really Means (From My Perspective)
 
 When people say “GPU architecture”, it sounds very abstract.
 
-But in simple terms, I started thinking about it like this:
-
-It is the blueprint of the GPU.
+But in simple terms, I started thinking about it like this: It is the blueprint of the GPU.
 
 It defines how everything is built inside the chip.
 
@@ -38,21 +31,15 @@ Not just cores, but also:
 - what kind of operations are fast  
 - what the GPU is actually optimized for  
 
----
-
 And once I understood this, something clicked.
 
 Every new architecture is not just a small upgrade.
 
 It is usually a shift in design priorities.
 
----
-
 ## Looking Back: How Things Evolved
 
 Instead of trying to memorize everything, I started looking at the timeline like a story.
-
----
 
 In the early modern era, GPUs were still very focused on general compute and graphics.
 
@@ -69,11 +56,7 @@ At that stage, the goal was still clear:
 
 Make GPUs faster and more efficient for general workloads.
 
----
-
 Then something changed.
-
----
 
 ## The Turning Point: AI Becomes Central
 
@@ -92,13 +75,9 @@ At this point, GPUs stopped being “just graphics hardware”.
 
 They became full compute platforms.
 
----
-
 ## What Changed in New Architectures
 
 When I moved to more recent architectures, the direction became even clearer.
-
----
 
 ### Blackwell (2024–2025)
 
@@ -108,9 +87,7 @@ Everything is designed around large-scale AI workloads.
 
 More compute, more bandwidth, more density.
 
-But what I found interesting is this:
-
-The real performance gains are not universal.
+But what I found interesting is this: The real performance gains are not universal.
 
 They depend heavily on:
 
@@ -119,8 +96,6 @@ They depend heavily on:
 - the system setup  
 
 So “faster GPU” is not always a simple statement.
-
----
 
 ### Rubin (2026, Now Entering Deployment)
 
@@ -137,13 +112,9 @@ From what is known so far:
 - very high SM counts  
 - higher overall compute density  
 
-And something important:
-
-Rubin is not just a concept anymore.
+And something important: Rubin is not just a concept anymore.
 
 It is already entering real systems and cloud environments.
-
----
 
 ### Looking Ahead: Rubin Ultra and Beyond
 
@@ -153,13 +124,9 @@ Rubin Ultra is expected to push things even further.
 
 And then there is Feynman on the roadmap.
 
-At this point, it is clear:
-
-The direction is not changing.
+At this point, it is clear: The direction is not changing.
 
 Everything is moving toward larger, more specialized AI systems.
-
----
 
 ## What I Learned About Performance
 
@@ -174,11 +141,7 @@ But that quickly became confusing.
 
 Because those numbers do not tell the full story.
 
----
-
-A better way to think about it is this:
-
-Performance depends on context.
+A better way to think about it is this: Performance depends on context.
 
 It depends on:
 
@@ -187,15 +150,9 @@ It depends on:
 - how memory behaves  
 - how the architecture is designed  
 
----
-
-For example:
-
-A GPU can look very powerful on paper, but perform poorly for a specific task.
+For example: A GPU can look very powerful on paper, but perform poorly for a specific task.
 
 And another GPU with lower “raw numbers” can outperform it in real scenarios.
-
----
 
 ## Naming Also Changed (And That Matters)
 
@@ -203,17 +160,11 @@ Another thing that confused me at the beginning was naming.
 
 Older GPUs were often labeled as “Tesla”.
 
-But in newer architectures, this shifted to:
-
-Data Center GPUs.
+But in newer architectures, this shifted to: Data Center GPUs.
 
 This reflects something deeper.
 
-The focus moved from:
-
-generic compute → AI and cloud systems
-
----
+The focus moved from: generic compute → AI and cloud systems
 
 ## What Finally Made It Clear for Me
 
@@ -225,8 +176,6 @@ Each architecture answers a question:
 
 What kind of problems are we trying to solve now?
 
----
-
 And once I looked at it this way, everything became easier.
 
 GPU names made more sense.
@@ -235,9 +184,7 @@ Performance differences became more logical.
 
 And CUDA concepts started to connect naturally.
 
----
-
-## Final Thought
+## Final
 
 GPU architectures are not just technical updates.
 
