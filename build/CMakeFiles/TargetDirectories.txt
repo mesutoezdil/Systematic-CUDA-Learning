@@ -1,8 +1,0 @@
-/home/ubuntu/Systematic-CUDA-Learning/build/CMakeFiles/edit_cache.dir
-/home/ubuntu/Systematic-CUDA-Learning/build/CMakeFiles/rebuild_cache.dir
-/home/ubuntu/Systematic-CUDA-Learning/build/CUDA/00/code/CMakeFiles/run_00.dir
-/home/ubuntu/Systematic-CUDA-Learning/build/CUDA/00/code/CMakeFiles/edit_cache.dir
-/home/ubuntu/Systematic-CUDA-Learning/build/CUDA/00/code/CMakeFiles/rebuild_cache.dir
-/home/ubuntu/Systematic-CUDA-Learning/build/CUDA/01/code/CMakeFiles/run_01.dir
-/home/ubuntu/Systematic-CUDA-Learning/build/CUDA/01/code/CMakeFiles/edit_cache.dir
-/home/ubuntu/Systematic-CUDA-Learning/build/CUDA/01/code/CMakeFiles/rebuild_cache.dir
