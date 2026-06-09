@@ -1,0 +1,6 @@
+project_id     = "project-e00..."
+instance_name  = "cuda-lab"
+platform       = "gpu-l40s-d"
+preset         = "1gpu-16vcpu-96gb"
+subnet_id      = "vpcsubnet-e00..."
+ssh_public_key = "ssh-ed25519 AAAA..."
