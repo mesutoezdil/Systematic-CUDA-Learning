@@ -5,7 +5,7 @@ This lesson covers the full compilation and execution workflow for a CUDA progra
 Environment used in the video: Windows 11 + WSL2 (Ubuntu), CUDA 11.5.
 Your environment: native Linux (Ubuntu 24), CUDA 13.0, NVIDIA L40S (46 GB, Ada Lovelace, sm_89).
 
-## Source File: `project001.cu`
+## Source file: `project001.cu`
 
 ```c
 #include "cuda_runtime.h"
@@ -34,13 +34,13 @@ int main()
 Launch configuration: 2 blocks, 64 threads per block = 128 threads total.
 Warp calculation: 64 threads / 32 = 2 warps per block.
 
-## Step 1 — Verify NVCC
+## Step 1 — Verify nvcc
 
 ```bash
 nvcc --version
 ```
 
-Output on this machine (CUDA 13.0, L40S):
+Output on this machine:
 
 ```
 nvcc: NVIDIA (R) Cuda compiler driver
@@ -50,7 +50,7 @@ Cuda compilation tools, release 13.0, V13.0.88
 Build cuda_13.0.r13.0/compiler.36424714_0
 ```
 
-Note: the video shows CUDA 11.5. The commands are identical across versions.
+The video shows CUDA 11.5. The compilation commands are identical across versions.
 
 ## Step 2 — Compile
 
@@ -58,12 +58,18 @@ Note: the video shows CUDA 11.5. The commands are identical across versions.
 nvcc -o project001 project001.cu
 ```
 
-`-o project001` sets the output executable name. If the file already exists it is overwritten.
+`-o project001` sets the output executable name. If the executable already exists, it gets overwritten. You can omit `-o` on the first compile (the default output name is `a.out`), but using it consistently avoids confusion.
 
 Verify the executable was created:
 
 ```bash
 ls -lh project001
+```
+
+Output on this machine:
+
+```
+-rwxrwxr-x 1 ubuntu ubuntu 966K Jun  9 21:58 project001
 ```
 
 ## Step 3 — Run
@@ -72,23 +78,30 @@ ls -lh project001
 ./project001
 ```
 
-## The Synchronization Problem
+## The synchronization problem
 
 ### Without `cudaDeviceSynchronize()`
 
+When the CPU reaches the kernel launch line:
+
 ```c
 test01 <<<2, 64>>> ();
-// cudaDeviceSynchronize();
-return 0;
 ```
 
-The CPU dispatches the kernel to the GPU and immediately moves to `return 0`. The process exits before the GPU has finished printing. On this machine (L40S, Ubuntu 24, CUDA 13.0), running the binary produces no output at all:
+it sends the kernel to the GPU and immediately moves to the next instruction without waiting. If the next instruction is `return 0`, the process exits before the GPU has printed anything.
 
-```
-(no output)
+In the video (CUDA 11.5, WSL2), the behavior was intermittent: sometimes output appeared, sometimes it didn't, depending on timing. On this machine (CUDA 13.0, L40S, native Ubuntu), running the binary without `cudaDeviceSynchronize()` consistently produces no output across all runs:
+
+```bash
+$ ./project001
+$
+$ ./project001
+$
+$ ./project001
+$
 ```
 
-This is not a bug in the kernel. It is a host/device synchronization gap.
+Three runs, no output any of them. The kernel ran on the GPU, but the process exited before the GPU's print buffer flushed.
 
 ### With `cudaDeviceSynchronize()`
 
@@ -98,11 +111,18 @@ cudaDeviceSynchronize();
 return 0;
 ```
 
-The CPU blocks at `cudaDeviceSynchronize()` until all GPU threads complete. Every run produces full output.
+`cudaDeviceSynchronize()` blocks the CPU at that line until all active GPU threads finish. After that call returns, the print buffer has flushed and all output is on the terminal. Every run produces the full output, every time.
 
-## Expected Output
+Compile and run:
 
-Full output on this machine with `<<<2, 64>>>` and `cudaDeviceSynchronize()`:
+```bash
+nvcc -o project001 project001.cu
+./project001
+```
+
+## Output
+
+Full output with `cudaDeviceSynchronize()` and launch config `<<<2, 64>>>` (128 lines total):
 
 ```
 The block ID is 0 --- The thread ID is 0 --- The warp ID 0
@@ -235,9 +255,17 @@ The block ID is 1 --- The thread ID is 62 --- The warp ID 1
 The block ID is 1 --- The thread ID is 63 --- The warp ID 1
 ```
 
-Block 0 completed entirely before block 1 in this run. Block order is not guaranteed across runs.
+Block 0 printed before block 1 in both runs on this machine. Block order is not guaranteed across runs or machines.
 
-## Compilation Error Debugging
+Run it a second time:
+
+```bash
+./project001
+```
+
+The output is identical, 128 lines, every time. With `cudaDeviceSynchronize()` there is no possibility of getting empty output.
+
+## Compilation error debugging
 
 Remove the semicolon from line 10:
 
@@ -251,7 +279,7 @@ Recompile:
 nvcc -o project001 project001.cu
 ```
 
-NVCC output on this machine:
+Output on this machine:
 
 ```
 project001.cu(9): error: expected a ";"
@@ -261,23 +289,26 @@ project001.cu(9): error: expected a ";"
 1 error detected in the compilation of "project001.cu".
 ```
 
-The error points to line 9 (the `printf`), not line 8 where the semicolon is missing. The parser detects the problem only when it hits the next token. Always check the line immediately before the reported error line.
+The error points to line 9 (the `printf` line), not line 8 where the semicolon is missing. The parser only detects the problem when it reaches the next token on line 9. Always check the line immediately before the one the compiler reports.
 
-## L40S-Specific Notes
+Fix: restore the semicolon, recompile, and confirm clean build.
+
+## L40S-specific notes
 
 | Parameter | Video | This machine |
 |---|---|---|
 | CUDA release | 11.5 | 13.0 |
 | GPU | generic | NVIDIA L40S (sm_89) |
 | OS | WSL2 (Ubuntu) | native Ubuntu 24 |
+| Shell | cmd.exe + wsl | direct SSH |
 
-To compile with explicit architecture targeting:
+To compile with explicit architecture targeting (recommended on L40S):
 
 ```bash
 nvcc -arch=sm_89 -o project001 project001.cu
 ```
 
-Without `-arch`, NVCC targets a conservative default. Being explicit avoids surprises on newer hardware.
+Without `-arch`, NVCC picks a conservative default. Specifying `sm_89` directly targets the L40S hardware and avoids surprises.
 
 To confirm sm_89 is supported in this toolkit:
 
@@ -292,6 +323,8 @@ Output on this machine:
         'sm_86','sm_87','sm_88','sm_89','sm_90','sm_90a'.
 ```
 
+sm_89 is listed. The compilation with `-arch=sm_89` succeeds cleanly.
+
 ## Summary
 
 | Step | Command |
@@ -301,12 +334,12 @@ Output on this machine:
 | Compile (L40S) | `nvcc -arch=sm_89 -o project001 project001.cu` |
 | Run | `./project001` |
 
-Key concept: always add `cudaDeviceSynchronize()` after any kernel launch where the host needs to observe GPU-side output or results before the program exits.
+Always add `cudaDeviceSynchronize()` after a kernel launch when the host needs to observe GPU output or results before the program exits. Without it, on this machine, you get no output at all.
 
 ## Glossary
 
-- `nvcc`: the CUDA compiler driver. Splits host and device code, compiles each with the appropriate toolchain.
-- `-o`: flag to set the output binary name. Without it, the default output name is `a.out`.
-- `-arch=sm_89`: compile for the specific compute capability of the L40S. sm_89 is Ada Lovelace.
-- `cudaDeviceSynchronize()`: blocks the CPU until all previously launched GPU work is complete.
-- warp ID: the warp a thread belongs to within its block. Computed as `threadIdx.x / 32`.
+- `nvcc`: the CUDA compiler driver. Handles both host and device code in the same `.cu` file.
+- `-o`: sets the output executable name. Without it, the default is `a.out`.
+- `-arch=sm_89`: compile for compute capability 8.9, which is the L40S (Ada Lovelace).
+- `cudaDeviceSynchronize()`: blocks the CPU until all previously launched GPU work completes.
+- warp ID: which warp a thread belongs to within its block. Calculated as `threadIdx.x / 32`.
