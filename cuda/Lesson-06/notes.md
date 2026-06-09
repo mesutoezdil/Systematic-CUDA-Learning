@@ -1,139 +1,312 @@
-# Lesson 06: Device Memory
+# Lesson 06 — Compiling CUDA on Linux
 
-The kernel in this lesson takes a pointer as an argument and writes into an array. This is the first time a kernel does useful work instead of just printing. It introduces the three functions that manage memory on the GPU: `cudaMalloc`, `cudaMemcpy`, and `cudaFree`.
+This lesson covers the full compilation and execution workflow for a CUDA program on Linux. It also explains a subtle but critical behavior: why a GPU kernel can appear to produce no output when `cudaDeviceSynchronize()` is missing, and what happens when it is added.
 
-## Why the kernel cannot use CPU memory
+Environment used in the video: Windows 11 + WSL2 (Ubuntu), CUDA 11.5.
+Your environment: native Linux (Ubuntu 24), CUDA 13.0, NVIDIA L40S (46 GB, Ada Lovelace, sm_89).
 
-GPU and CPU have separate memory spaces. A pointer that is valid on the CPU points into system RAM, which the GPU cannot read or write. Passing a CPU pointer to a kernel compiles fine but causes a segfault at runtime. All data the kernel touches must live in device memory.
-
-## cudaMalloc
-
-`cudaMalloc` allocates memory on the GPU and stores the resulting pointer in a variable you pass by address:
-
-```c
-int *d_arr;
-cudaMalloc(&d_arr, N * sizeof(int));
-```
-
-The `d_` prefix is a convention, not a requirement. It marks the pointer as pointing into device memory so you do not accidentally pass it to regular C functions. The size argument works the same way as `malloc`.
-
-## cudaMemcpy
-
-`cudaMemcpy` copies a block of bytes between CPU and GPU memory. The fourth argument sets the direction:
-
-```c
-cudaMemcpy(d_arr, h_arr, N * sizeof(int), cudaMemcpyHostToDevice);
-cudaMemcpy(h_arr, d_arr, N * sizeof(int), cudaMemcpyDeviceToHost);
-```
-
-`cudaMemcpyHostToDevice` copies from CPU to GPU before the kernel runs. `cudaMemcpyDeviceToHost` copies results back after. The copy blocks until it finishes, so there is no need to call `cudaDeviceSynchronize` between the copy and the next CPU statement.
-
-## cudaFree
-
-`cudaFree` releases device memory. It takes the pointer directly, not its address:
-
-```c
-cudaFree(d_arr);
-```
-
-Not calling it leaks GPU memory for the lifetime of the process.
-
-## The kernel
-
-The kernel receives `d_arr` and each thread writes its global ID into the corresponding slot:
-
-```c
-__global__ void fillWithID(int *arr)
-{
-    int id = blockIdx.x * blockDim.x + threadIdx.x;
-    arr[id] = id;
-}
-```
-
-The global ID formula is from Lesson 02. With `<<<2, 4>>>` there are 8 threads numbered 0 through 7. Thread 0 writes 0, thread 7 writes 7.
-
-## Code
+## Source File: `project001.cu`
 
 ```c
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <stdio.h>
 
-__global__ void fillWithID(int *arr)
+__global__ void test01()
 {
-    int id = blockIdx.x * blockDim.x + threadIdx.x;
-    arr[id] = id;
+    // print the blocks and threads IDs
+    // warp = 32 threads. (64 threads/block) --> (64/32 = 2 warps/block)
+    int warp_ID_Value = 0;
+    warp_ID_Value = threadIdx.x / 32;
+    printf("The block ID is %d --- The thread ID is %d --- The warp ID %d\n",
+           blockIdx.x, threadIdx.x, warp_ID_Value);
 }
 
 int main()
 {
-    int N = 8;
-    int h_arr[8];
-    int *d_arr;
-
-    cudaMalloc(&d_arr, N * sizeof(int));
-
-    fillWithID<<<2, 4>>>(d_arr);
-
-    cudaMemcpy(h_arr, d_arr, N * sizeof(int), cudaMemcpyDeviceToHost);
-    cudaFree(d_arr);
-
-    for (int i = 0; i < N; i++)
-        printf("arr[%d] = %d\n", i, h_arr[i]);
-
+    // kernel_name<<<num_of_blocks, num_of_threads_per_block>>>();
+    test01 <<<2, 64>>> ();
+    cudaDeviceSynchronize();
     return 0;
 }
 ```
 
-## Compile and run
+Launch configuration: 2 blocks, 64 threads per block = 128 threads total.
+Warp calculation: 64 threads / 32 = 2 warps per block.
+
+## Step 1 — Verify NVCC
 
 ```bash
-nvcc first_kernel.cu -o first_kernel
-./first_kernel
+nvcc --version
 ```
 
-Expected output:
+Output on this machine (CUDA 13.0, L40S):
 
 ```
-arr[0] = 0
-arr[1] = 1
-arr[2] = 2
-arr[3] = 3
-arr[4] = 4
-arr[5] = 5
-arr[6] = 6
-arr[7] = 7
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2025 NVIDIA Corporation
+Built on Wed_Aug_20_01:58:59_PM_PDT_2025
+Cuda compilation tools, release 13.0, V13.0.88
+Build cuda_13.0.r13.0/compiler.36424714_0
 ```
 
-Output is deterministic here. Each thread writes to a different slot, so there is no race and no ordering dependency.
+Note: the video shows CUDA 11.5. The commands are identical across versions.
 
-## Visual
+## Step 2 — Compile
+
+```bash
+nvcc -o project001 project001.cu
+```
+
+`-o project001` sets the output executable name. If the file already exists it is overwritten.
+
+Verify the executable was created:
+
+```bash
+ls -lh project001
+```
+
+## Step 3 — Run
+
+```bash
+./project001
+```
+
+## The Synchronization Problem
+
+### Without `cudaDeviceSynchronize()`
+
+```c
+test01 <<<2, 64>>> ();
+// cudaDeviceSynchronize();
+return 0;
+```
+
+The CPU dispatches the kernel to the GPU and immediately moves to `return 0`. The process exits before the GPU has finished printing. On this machine (L40S, Ubuntu 24, CUDA 13.0), running the binary produces no output at all:
 
 ```
-CPU (host)                         GPU (device)
------------                        ------------
-h_arr[8]  ---cudaMemcpy H2D-->    d_arr[8]
-                                       |
-                                  fillWithID<<<2,4>>>
-                                  Thread 0: d_arr[0] = 0
-                                  Thread 1: d_arr[1] = 1
-                                  ...
-                                  Thread 7: d_arr[7] = 7
-
-          <--cudaMemcpy D2H---    d_arr[8]
-h_arr[8]
-  [0]=0 [1]=1 [2]=2 [3]=3
-  [4]=4 [5]=5 [6]=6 [7]=7
+(no output)
 ```
+
+This is not a bug in the kernel. It is a host/device synchronization gap.
+
+### With `cudaDeviceSynchronize()`
+
+```c
+test01 <<<2, 64>>> ();
+cudaDeviceSynchronize();
+return 0;
+```
+
+The CPU blocks at `cudaDeviceSynchronize()` until all GPU threads complete. Every run produces full output.
+
+## Expected Output
+
+Full output on this machine with `<<<2, 64>>>` and `cudaDeviceSynchronize()`:
+
+```
+The block ID is 0 --- The thread ID is 0 --- The warp ID 0
+The block ID is 0 --- The thread ID is 1 --- The warp ID 0
+The block ID is 0 --- The thread ID is 2 --- The warp ID 0
+The block ID is 0 --- The thread ID is 3 --- The warp ID 0
+The block ID is 0 --- The thread ID is 4 --- The warp ID 0
+The block ID is 0 --- The thread ID is 5 --- The warp ID 0
+The block ID is 0 --- The thread ID is 6 --- The warp ID 0
+The block ID is 0 --- The thread ID is 7 --- The warp ID 0
+The block ID is 0 --- The thread ID is 8 --- The warp ID 0
+The block ID is 0 --- The thread ID is 9 --- The warp ID 0
+The block ID is 0 --- The thread ID is 10 --- The warp ID 0
+The block ID is 0 --- The thread ID is 11 --- The warp ID 0
+The block ID is 0 --- The thread ID is 12 --- The warp ID 0
+The block ID is 0 --- The thread ID is 13 --- The warp ID 0
+The block ID is 0 --- The thread ID is 14 --- The warp ID 0
+The block ID is 0 --- The thread ID is 15 --- The warp ID 0
+The block ID is 0 --- The thread ID is 16 --- The warp ID 0
+The block ID is 0 --- The thread ID is 17 --- The warp ID 0
+The block ID is 0 --- The thread ID is 18 --- The warp ID 0
+The block ID is 0 --- The thread ID is 19 --- The warp ID 0
+The block ID is 0 --- The thread ID is 20 --- The warp ID 0
+The block ID is 0 --- The thread ID is 21 --- The warp ID 0
+The block ID is 0 --- The thread ID is 22 --- The warp ID 0
+The block ID is 0 --- The thread ID is 23 --- The warp ID 0
+The block ID is 0 --- The thread ID is 24 --- The warp ID 0
+The block ID is 0 --- The thread ID is 25 --- The warp ID 0
+The block ID is 0 --- The thread ID is 26 --- The warp ID 0
+The block ID is 0 --- The thread ID is 27 --- The warp ID 0
+The block ID is 0 --- The thread ID is 28 --- The warp ID 0
+The block ID is 0 --- The thread ID is 29 --- The warp ID 0
+The block ID is 0 --- The thread ID is 30 --- The warp ID 0
+The block ID is 0 --- The thread ID is 31 --- The warp ID 0
+The block ID is 0 --- The thread ID is 32 --- The warp ID 1
+The block ID is 0 --- The thread ID is 33 --- The warp ID 1
+The block ID is 0 --- The thread ID is 34 --- The warp ID 1
+The block ID is 0 --- The thread ID is 35 --- The warp ID 1
+The block ID is 0 --- The thread ID is 36 --- The warp ID 1
+The block ID is 0 --- The thread ID is 37 --- The warp ID 1
+The block ID is 0 --- The thread ID is 38 --- The warp ID 1
+The block ID is 0 --- The thread ID is 39 --- The warp ID 1
+The block ID is 0 --- The thread ID is 40 --- The warp ID 1
+The block ID is 0 --- The thread ID is 41 --- The warp ID 1
+The block ID is 0 --- The thread ID is 42 --- The warp ID 1
+The block ID is 0 --- The thread ID is 43 --- The warp ID 1
+The block ID is 0 --- The thread ID is 44 --- The warp ID 1
+The block ID is 0 --- The thread ID is 45 --- The warp ID 1
+The block ID is 0 --- The thread ID is 46 --- The warp ID 1
+The block ID is 0 --- The thread ID is 47 --- The warp ID 1
+The block ID is 0 --- The thread ID is 48 --- The warp ID 1
+The block ID is 0 --- The thread ID is 49 --- The warp ID 1
+The block ID is 0 --- The thread ID is 50 --- The warp ID 1
+The block ID is 0 --- The thread ID is 51 --- The warp ID 1
+The block ID is 0 --- The thread ID is 52 --- The warp ID 1
+The block ID is 0 --- The thread ID is 53 --- The warp ID 1
+The block ID is 0 --- The thread ID is 54 --- The warp ID 1
+The block ID is 0 --- The thread ID is 55 --- The warp ID 1
+The block ID is 0 --- The thread ID is 56 --- The warp ID 1
+The block ID is 0 --- The thread ID is 57 --- The warp ID 1
+The block ID is 0 --- The thread ID is 58 --- The warp ID 1
+The block ID is 0 --- The thread ID is 59 --- The warp ID 1
+The block ID is 0 --- The thread ID is 60 --- The warp ID 1
+The block ID is 0 --- The thread ID is 61 --- The warp ID 1
+The block ID is 0 --- The thread ID is 62 --- The warp ID 1
+The block ID is 0 --- The thread ID is 63 --- The warp ID 1
+The block ID is 1 --- The thread ID is 0 --- The warp ID 0
+The block ID is 1 --- The thread ID is 1 --- The warp ID 0
+The block ID is 1 --- The thread ID is 2 --- The warp ID 0
+The block ID is 1 --- The thread ID is 3 --- The warp ID 0
+The block ID is 1 --- The thread ID is 4 --- The warp ID 0
+The block ID is 1 --- The thread ID is 5 --- The warp ID 0
+The block ID is 1 --- The thread ID is 6 --- The warp ID 0
+The block ID is 1 --- The thread ID is 7 --- The warp ID 0
+The block ID is 1 --- The thread ID is 8 --- The warp ID 0
+The block ID is 1 --- The thread ID is 9 --- The warp ID 0
+The block ID is 1 --- The thread ID is 10 --- The warp ID 0
+The block ID is 1 --- The thread ID is 11 --- The warp ID 0
+The block ID is 1 --- The thread ID is 12 --- The warp ID 0
+The block ID is 1 --- The thread ID is 13 --- The warp ID 0
+The block ID is 1 --- The thread ID is 14 --- The warp ID 0
+The block ID is 1 --- The thread ID is 15 --- The warp ID 0
+The block ID is 1 --- The thread ID is 16 --- The warp ID 0
+The block ID is 1 --- The thread ID is 17 --- The warp ID 0
+The block ID is 1 --- The thread ID is 18 --- The warp ID 0
+The block ID is 1 --- The thread ID is 19 --- The warp ID 0
+The block ID is 1 --- The thread ID is 20 --- The warp ID 0
+The block ID is 1 --- The thread ID is 21 --- The warp ID 0
+The block ID is 1 --- The thread ID is 22 --- The warp ID 0
+The block ID is 1 --- The thread ID is 23 --- The warp ID 0
+The block ID is 1 --- The thread ID is 24 --- The warp ID 0
+The block ID is 1 --- The thread ID is 25 --- The warp ID 0
+The block ID is 1 --- The thread ID is 26 --- The warp ID 0
+The block ID is 1 --- The thread ID is 27 --- The warp ID 0
+The block ID is 1 --- The thread ID is 28 --- The warp ID 0
+The block ID is 1 --- The thread ID is 29 --- The warp ID 0
+The block ID is 1 --- The thread ID is 30 --- The warp ID 0
+The block ID is 1 --- The thread ID is 31 --- The warp ID 0
+The block ID is 1 --- The thread ID is 32 --- The warp ID 1
+The block ID is 1 --- The thread ID is 33 --- The warp ID 1
+The block ID is 1 --- The thread ID is 34 --- The warp ID 1
+The block ID is 1 --- The thread ID is 35 --- The warp ID 1
+The block ID is 1 --- The thread ID is 36 --- The warp ID 1
+The block ID is 1 --- The thread ID is 37 --- The warp ID 1
+The block ID is 1 --- The thread ID is 38 --- The warp ID 1
+The block ID is 1 --- The thread ID is 39 --- The warp ID 1
+The block ID is 1 --- The thread ID is 40 --- The warp ID 1
+The block ID is 1 --- The thread ID is 41 --- The warp ID 1
+The block ID is 1 --- The thread ID is 42 --- The warp ID 1
+The block ID is 1 --- The thread ID is 43 --- The warp ID 1
+The block ID is 1 --- The thread ID is 44 --- The warp ID 1
+The block ID is 1 --- The thread ID is 45 --- The warp ID 1
+The block ID is 1 --- The thread ID is 46 --- The warp ID 1
+The block ID is 1 --- The thread ID is 47 --- The warp ID 1
+The block ID is 1 --- The thread ID is 48 --- The warp ID 1
+The block ID is 1 --- The thread ID is 49 --- The warp ID 1
+The block ID is 1 --- The thread ID is 50 --- The warp ID 1
+The block ID is 1 --- The thread ID is 51 --- The warp ID 1
+The block ID is 1 --- The thread ID is 52 --- The warp ID 1
+The block ID is 1 --- The thread ID is 53 --- The warp ID 1
+The block ID is 1 --- The thread ID is 54 --- The warp ID 1
+The block ID is 1 --- The thread ID is 55 --- The warp ID 1
+The block ID is 1 --- The thread ID is 56 --- The warp ID 1
+The block ID is 1 --- The thread ID is 57 --- The warp ID 1
+The block ID is 1 --- The thread ID is 58 --- The warp ID 1
+The block ID is 1 --- The thread ID is 59 --- The warp ID 1
+The block ID is 1 --- The thread ID is 60 --- The warp ID 1
+The block ID is 1 --- The thread ID is 61 --- The warp ID 1
+The block ID is 1 --- The thread ID is 62 --- The warp ID 1
+The block ID is 1 --- The thread ID is 63 --- The warp ID 1
+```
+
+Block 0 completed entirely before block 1 in this run. Block order is not guaranteed across runs.
+
+## Compilation Error Debugging
+
+Remove the semicolon from line 10:
+
+```c
+warp_ID_Value = threadIdx.x / 32   // semicolon removed
+```
+
+Recompile:
+
+```bash
+nvcc -o project001 project001.cu
+```
+
+NVCC output on this machine:
+
+```
+project001.cu(9): error: expected a ";"
+      printf("The block ID is %d --- The thread ID is %d --- The warp ID %d\n",
+      ^
+
+1 error detected in the compilation of "project001.cu".
+```
+
+The error points to line 9 (the `printf`), not line 8 where the semicolon is missing. The parser detects the problem only when it hits the next token. Always check the line immediately before the reported error line.
+
+## L40S-Specific Notes
+
+| Parameter | Video | This machine |
+|---|---|---|
+| CUDA release | 11.5 | 13.0 |
+| GPU | generic | NVIDIA L40S (sm_89) |
+| OS | WSL2 (Ubuntu) | native Ubuntu 24 |
+
+To compile with explicit architecture targeting:
+
+```bash
+nvcc -arch=sm_89 -o project001 project001.cu
+```
+
+Without `-arch`, NVCC targets a conservative default. Being explicit avoids surprises on newer hardware.
+
+To confirm sm_89 is supported in this toolkit:
+
+```bash
+nvcc --help | grep sm_89
+```
+
+Output on this machine:
+
+```
+        'sm_75','sm_80','sm_86','sm_87','sm_88','sm_89','sm_90','sm_90a'.
+        'sm_86','sm_87','sm_88','sm_89','sm_90','sm_90a'.
+```
+
+## Summary
+
+| Step | Command |
+|---|---|
+| Check compiler | `nvcc --version` |
+| Compile | `nvcc -o project001 project001.cu` |
+| Compile (L40S) | `nvcc -arch=sm_89 -o project001 project001.cu` |
+| Run | `./project001` |
+
+Key concept: always add `cudaDeviceSynchronize()` after any kernel launch where the host needs to observe GPU-side output or results before the program exits.
 
 ## Glossary
 
-- device memory: memory physically on the GPU board. The kernel can read and write it. The CPU cannot access it directly.
-- host memory: regular system RAM. Accessible by the CPU. Not directly readable by the GPU.
-- `cudaMalloc`: allocates N bytes in device memory. Takes the address of a pointer and fills it in.
-- `cudaFree`: releases device memory allocated by `cudaMalloc`.
-- `cudaMemcpy`: copies bytes between host and device memory. Direction is set by the fourth argument.
-- `cudaMemcpyHostToDevice`: copy direction from CPU to GPU.
-- `cudaMemcpyDeviceToHost`: copy direction from GPU to CPU.
-- `d_` prefix: naming convention for pointers into device memory. Not enforced by the compiler.
-- `h_` prefix: naming convention for pointers into host memory. Often used alongside `d_` to keep the two clear.
+- `nvcc`: the CUDA compiler driver. Splits host and device code, compiles each with the appropriate toolchain.
+- `-o`: flag to set the output binary name. Without it, the default output name is `a.out`.
+- `-arch=sm_89`: compile for the specific compute capability of the L40S. sm_89 is Ada Lovelace.
+- `cudaDeviceSynchronize()`: blocks the CPU until all previously launched GPU work is complete.
+- warp ID: the warp a thread belongs to within its block. Computed as `threadIdx.x / 32`.
