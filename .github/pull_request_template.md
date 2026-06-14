@@ -1,1 +1,1 @@
-This repository does not accept pull requests.
+Please describe what you are changing and why.
