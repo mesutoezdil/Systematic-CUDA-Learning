@@ -8,13 +8,7 @@
 
 This repo documents my journey of learning CUDA from scratch.
 
-Not prompt-generated. Not copy-paste.
-
 Just real understanding, built step by step.
-
-There is too much low-effort, AI-generated content around CUDA.
-
-Most resources are either too academic or too shallow.  
 
 This repo is different.
 
